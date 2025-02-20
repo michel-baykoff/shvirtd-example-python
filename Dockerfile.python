@@ -1,0 +1,26 @@
+FROM python:3.9-slim as builder
+
+WORKDIR /app
+
+COPY requirements.txt ./
+
+RUN python -m venv /app/venv
+
+ENV PATH="/app/venv/bin:$PATH"
+
+RUN pip install -r requirements.txt
+
+FROM python:3.9-alpine as worker
+
+WORKDIR /app
+
+RUN addgroup --system python && \
+    adduser --system --disabled-password  --ingroup python python && chown python:python /app
+USER python
+
+COPY --chown=python:python --from=builder /app/venv ./venv
+COPY --chown=python:python . .
+
+
+ENV PATH="/app/venv/bin:$PATH"
+CMD ["python", "main.py"]
